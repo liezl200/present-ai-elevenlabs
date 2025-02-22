@@ -1,6 +1,6 @@
 # present-ai-elevenlabs
 
-In frontend:
+In the frontend:
 
 `cp .env.example .env`
 
