@@ -6,7 +6,7 @@ In the frontend:
 
 Edit .env file with ElevenLabs API key
 
-`pnpm install
-pnpm dev`
+`npm install
+npm run dev`
 
 Open http://localhost:3000 to view

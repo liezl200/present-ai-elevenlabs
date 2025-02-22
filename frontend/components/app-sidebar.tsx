@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 
-import { Logo } from '@/components/logo';
+import { PresentableLogo } from '@/components/logo';
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +26,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="h-[60px] px-[21px]">
         <div className="flex h-full items-center justify-between px-1 pl-0">
           <Link href="/">
-            <Logo className="dark:text-white" height={16} />
+            <PresentableLogo className="dark:text-white" height={16} />
           </Link>
         </div>
       </SidebarHeader>

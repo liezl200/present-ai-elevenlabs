@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { getApiKey } from '@/app/actions';
 import { AppSidebar } from '@/components/app-sidebar';
-import { Byline } from '@/components/by-line';
+// import { Byline } from '@/components/by-line';
 import { KeyProvider } from '@/components/key-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Card } from '@/components/ui/card';
@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </header>
                 <div className="p-4">
                   <div className="mx-auto max-w-4xl space-y-3 px-2 pt-20 lg:px-8 lg:py-8">
-                    <Byline />
+                    {/* <Byline /> */}
                     <Card className="border-gradient rounded-lg p-px shadow-lg">
                       <div className="bg-card rounded-lg">{children}</div>
                     </Card>

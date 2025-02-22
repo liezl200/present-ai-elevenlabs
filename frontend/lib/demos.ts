@@ -11,10 +11,10 @@ export type Item = {
 
 export const demos: { name: string; items: Item[] }[] = [
   {
-    name: 'Capabilities',
+    name: 'Presentations',
     items: [
       {
-        name: 'Sound effects',
+        name: 'Upload Presentation',
         icon: Sparkles,
         slug: 'sound-effects',
         description: 'Turn text into cinematic sound effects.',
