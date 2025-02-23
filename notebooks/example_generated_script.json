@@ -1,0 +1,154 @@
+{
+  "slides": [
+    {
+      "slide": 1,
+      "title": "Title Slide",
+      "script": "Welcome everyone! I'm Dr. Christopher Celano, and today we're going to explore three fascinating conditions that every clinician needs to understand: Catatonia, Neuroleptic Malignant Syndrome, and Serotonin Syndrome. As both a cardiac psychiatrist at MGH and a professor at Harvard Medical School, I've seen firsthand how critical it is to recognize and properly manage these conditions. Let's embark on this journey together to enhance your clinical expertise."
+    },
+    {
+      "slide": 2,
+      "title": "Disclosures",
+      "script": "Before we dive into the content, let me quickly address my professional relationships. I currently have a relationship with Sunovion Pharmaceuticals that includes various roles from consulting to teaching. I believe in transparency, and while some of these relationships are directly relevant to today's presentation, others are not. This disclosure ensures you have a complete picture of my professional context as we move forward."
+    },
+    {
+      "slide": 3,
+      "title": "Catatonia Prevalence",
+      "script": "Now, let's get into some fascinating epidemiology about catatonia. Would it surprise you to learn that it's more common than many think? We're looking at a prevalence rate of 7.8-9.0%, with the highest rates actually occurring in medical - not psychiatric - settings. Here's something that might shock you: up to 46% of catatonia cases have a primary cause that isn't psychiatric at all! When you're working on psychiatric consultation services, you'll encounter catatonia in about 1.6-5.5% of your patients, with older adults being particularly susceptible. These numbers really highlight why it's crucial for all of us, regardless of specialty, to be well-versed in recognizing this condition."
+    },
+    {
+      "slide": 1,
+      "title": "POSSUM Mnemonic",
+      "script": "Let's start with a brilliant clinical pearl - the POSSUM mnemonic. I love teaching this because it's such a practical way to identify potential catatonia. When nurses or staff tell you a patient is 'playing possum,' that should immediately trigger your clinical radar. POSSUM stands for Perseveration, Oppositionality, Speech changes, Slowed responses, Undernourished, and Motionless but awake. Think about it - just like a possum playing dead, these patients may appear withdrawn but are very much aware of their surroundings."
+    },
+    {
+      "slide": 2,
+      "title": "DSM-5 Criteria",
+      "script": "Now, once we suspect catatonia, we need to confirm it using our DSM-5 criteria. I want you to remember that we need three or more symptoms from this list - think of it as a 'pick three' menu if you will. The core features include catalepsy - that's maintaining unusual postures, waxy flexibility where limbs can be positioned like a wax figure, stupor, agitation, mutism, negativism, posturing, mannerisms, stereotypies, grimacing, and the fascinating mirror-like behaviors of echolalia and echopraxia. It's quite remarkable how these symptoms can manifest!"
+    },
+    {
+      "slide": 3,
+      "title": "Bush-Francis Scale",
+      "script": "The Bush-Francis Rating Scale is our gold standard assessment tool, and it's absolutely fascinating in its comprehensiveness. It gives us 23 items to evaluate - everything from excitement and stupor to some truly interesting phenomena like 'mitgehen' and 'gegenhalten.' I particularly want you to notice how it captures both the hypokinetic and hyperkinetic features of catatonia. This scale isn't just for diagnosis - it's invaluable for tracking treatment response. Think of it as your catatonia GPS, helping you navigate the clinical course!"
+    },
+    {
+      "slide": 1,
+      "title": "Challenges with Diagnosis",
+      "script": "Let's tackle one of the trickiest aspects of catatonia - making an accurate diagnosis. You know, I see residents struggling with this all the time. First, we have to wrestle with differentiating specific symptoms. Take rigidity for example - is it true rigidity, gegenhalten, or negativism? These can be quite tricky to tell apart at the bedside. \n\nWhat makes this even more challenging is that different rating scales don't always agree with each other. And here's something crucial to remember - catatonic symptoms exist on a spectrum. It's not simply present or absent, which can make standardized assessment challenging.\n\nFinally, and this is what makes catatonia so fascinating, it can present in so many different ways. No two cases look exactly alike, which is why you need to keep your clinical radar finely tuned."
+    },
+    {
+      "slide": 2,
+      "title": "Prototypes of Catatonia",
+      "script": "Now, to make this more manageable, I like to think about four classic 'prototypes' of catatonia. Picture these patients in your mind as I describe them.\n\nFirst, we have 'The Distant Mute' - this is your patient who's not speaking and barely moving. Often, the team might think they're choosing not to participate, but it's important to recognize this as a symptom, not a choice.\n\nThen there's 'The Waxy Stiff' - showing catalepsy and that fascinating waxy flexibility. These are often the patients that catch a physician's attention, though they might mistakenly attribute it to primary psychiatric illness.\n\n'The Broken Record' is our third prototype - showing echophenomena and verbigeration. These patients are commonly misdiagnosed with delirium, so watch out for that pitfall.\n\nFinally, we have 'The Stubborn Grouch' - displaying negativism and repetitive movements. Here's where we often see incomplete medical workups because, well, these patients can be challenging to work with!"
+    },
+    {
+      "slide": 3,
+      "title": "Pathophysiology of Catatonia",
+      "script": "Now let's dive into the fascinating neuroscience behind catatonia. At its core, we're looking at disruption in the pathways connecting the basal ganglia and cortex, resulting in what we call relative hypodopaminergia.\n\nThink of it as a complex highway system where different routes control different symptoms. The dorsolateral prefrontal and anterior cingulate pathways, when disrupted, give us akinetic mutism and dysautonomia. The lateral orbitofrontal circuit? That's your imitative and repetitive behaviors.\n\nHere's something really interesting - the supplementary motor area and presupplementary motor area become hyperactive in catatonia. This disrupts normal motor control, affecting both the initiation and inhibition of movement. It's like having a car with both the gas and brake pedals stuck at the same time!"
+    },
+    {
+      "slide": 1,
+      "title": "Pathophysiology of Catatonia",
+      "script": "Let's dive into the fascinating neurobiology behind catatonia. You know, I always find it helpful to think of the brain as an intricate symphony where different neurotransmitters play crucial roles. Two key players here are GABA and serotonin. The way dopamine works in our brain is actually conducted by these two neurotransmitters - think of them as the conductors of our neural orchestra. Here's something interesting: benzodiazepines, which boost GABA-A activity, can actually help our catatonic patients. But - and this is crucial to remember - GABA-B agonists like baclofen can actually trigger catatonia. We're also seeing compelling evidence about glutamate's role, particularly with anti-NMDA receptor encephalitis. Isn't it fascinating how understanding these pathways helps us treat our patients better?"
+    },
+    {
+      "slide": 2,
+      "title": "Evaluating Catatonic Patients - Part 1",
+      "script": "Now, let's get practical about how we evaluate these patients. I love teaching this part because it's where the art of medicine really shines. First, you want to observe your patient while attempting conversation - but here's a fun trick I teach all my residents: try scratching your head in an exaggerated way. You're looking for automatic mimicking behavior. Then, we check for cogwheeling - I like to think of it as testing the 'human robot' phenomenon. Gently manipulate their arms with varying pressure. Here's the key part: try positioning their arms in different ways to test for waxy flexibility. Finally, have them extend their arms and use that single-finger test - it's amazing how revealing these simple maneuvers can be!"
+    },
+    {
+      "slide": 3,
+      "title": "Evaluating Catatonic Patients - Part 2",
+      "script": "Let's continue with our examination techniques, and these are some of my favorites because they really show us how unique catatonia can be. First, the handshake test - you extend your hand while explicitly telling them NOT to shake it. It's counterintuitive, right? Then comes what I call the 'tongue test' - don't worry, we're not actually going to stick any pins! This test for negativism can be quite revealing. Always check for the grasp reflex, and - this is absolutely crucial - review the chart for the past 24 hours. Look at their oral intake, vital signs, and any incidents. Remember to observe your patient indirectly too - sometimes what they do when they think no one's watching tells us the most!"
+    },
+    {
+      "slide": 1,
+      "title": "Potential Causes of Catatonia",
+      "script": "Let's explore the fascinating range of conditions that can lead to catatonia. I always find it helpful to break these down into two main categories: medical and psychiatric causes. On the medical side, we're looking at everything from neurological issues like seizures and structural CNS damage, to systemic conditions like SLE, and even medication exposures like disulfiram and corticosteroids. Here's a fun way to remember it - think of your body as a complex orchestra, where any section, from the strings (nervous system) to the percussion (metabolic systems), can disrupt the harmony and potentially trigger catatonia. On the psychiatric side, we've got our major players: major depressive disorder, bipolar disorder, and psychotic disorders. It's crucial to keep all these possibilities in mind when evaluating a patient."
+    },
+    {
+      "slide": 2,
+      "title": "Workup for Catatonia",
+      "script": "Now, how do we systematically investigate catatonia? Think of yourself as a detective, gathering crucial evidence through a systematic workup. We start with our basic but essential labs - CBC and CMP. Don't forget creatine kinase - it's particularly important because these patients can develop rhabdomyolysis from prolonged immobility. Iron studies are crucial too - you'd be surprised how often iron deficiency plays a role! Then we move to our more specialized tests based on clinical suspicion: cultures, HIV testing, paraneoplastic panels, and autoimmune studies. And of course, we might need to look at the brain itself through imaging - CT, MRI, and EEG can all provide valuable pieces to this complex puzzle."
+    },
+    {
+      "slide": 3,
+      "title": "Catatonia vs. Delirium",
+      "script": "Here's where things get really interesting - the complex relationship between catatonia and delirium. While DSM-5 tells us we can't diagnose catatonia when symptoms occur exclusively in delirium, real-world clinical experience shows us it's not that simple. In fact, many patients with neuromedical causes of catatonia also have delirium. Here's a striking statistic: 12-37% of patients with delirium may show catatonic features! This is particularly common in hypoactive delirium and more frequently seen in women. The overlapping features can include excitement, immobility, mutism, negativism, staring, and withdrawal. Think of it as a Venn diagram where these two conditions often share a significant overlap zone."
+    },
+    {
+      "slide": 1,
+      "title": "Subtypes of Catatonia",
+      "script": "Let's explore the fascinating spectrum of catatonic presentations. The DSM-5 gives us three main specifiers: hyperactive, hypoactive, and mixed activity levels. But there's more we need to be aware of. Particularly concerning is malignant catatonia - think of it as catatonia's most dangerous form, where patients develop severe muscle rigidity, dangerous temperature spikes, and unstable vital signs. We also need to keep in mind conditions that can mimic catatonia, like delirious mania, neuroleptic malignant syndrome, and serotonin syndrome. These distinctions are crucial for proper treatment."
+    },
+    {
+      "slide": 2,
+      "title": "Management of Catatonia",
+      "script": "Now, how do we approach a patient with catatonia? First and foremost, we need to play detective and identify the underlying cause. This means conducting a thorough psychiatric evaluation - and don't forget to get collateral information! Sometimes our patients can't tell us their story, so family members become invaluable sources of information. We need to be meticulous with medical workup, especially if there are other concerning symptoms. Remember, these patients need close monitoring with frequent vital signs and supportive care. Sometimes, the solution is as simple as removing medications that might be causing the problem."
+    },
+    {
+      "slide": 3,
+      "title": "Treatment of Catatonia: Benzodiazepines",
+      "script": "When it comes to treatment, lorazepam is our superstar medication, and I'll tell you why. We prefer the intravenous route because it acts quickly and, interestingly, despite its shorter half-life, it has some unique properties that make it particularly effective. It binds more strongly to GABA-A receptors compared to other benzodiazepines. We typically start with 2mg and adjust based on response and our clinical suspicion. Once we've established that it's working, we'll maintain a regular dosing schedule - usually between 8 to 24mg per day. Here's a crucial pearl: when it's time to stop, taper very slowly. We don't want our patient sliding back into catatonia."
+    },
+    {
+      "slide": 1,
+      "title": "Treatment of Catatonia: ECT",
+      "script": "Let's talk about one of our most powerful tools in treating catatonia - electroconvulsive therapy, or ECT. The numbers here are truly impressive - ECT is effective in 85-90% of cases, and it's particularly valuable for that 60% of patients who don't respond to medication. Here's something crucial to remember: if your patient isn't responding to lorazepam within 48-72 hours, or if they're showing malignant symptoms or the excited subtype, ECT should be on your radar immediately. And here's a clinical pearl - don't be surprised if your patient needs maintenance ECT. It's quite common and can be essential for long-term stability."
+    },
+    {
+      "slide": 2,
+      "title": "Treatment of Catatonia: Alternatives - NMDA & Antiepileptics",
+      "script": "Now, let's explore some alternative treatments, starting with NMDA receptor antagonists. Amantadine is fascinating - we've got 18 documented cases showing effectiveness. Think of it as a double-agent: it works on NMDA receptors and has some dopamine agonist activity. Start low at 100mg daily and titrate up gradually. Memantine is another option, starting at 5mg twice daily. Now, moving to antiepileptics - and this is where it gets interesting - we've got carbamazepine, valproic acid, and topiramate. Each has shown promise, though with fewer documented cases. Remember these dosing ranges - they'll come in handy when standard treatments aren't cutting it."
+    },
+    {
+      "slide": 3,
+      "title": "Treatment of Catatonia: Alternative Antipsychotics",
+      "script": "Let's delve into antipsychotics - and this is particularly intriguing. These medications work through a unique mechanism involving 5-HT1A agonism and 5-HT2A antagonism, ultimately boosting dopamine in the prefrontal cortex. Aripiprazole and clozapine lead the pack with 9 cases each - not a huge number, but significant. Olanzapine follows with 7 cases, while risperidone and ziprasidone each have 2 documented cases. I want you to notice the wide dosing ranges here - it emphasizes the importance of individualizing treatment. This is critical: these aren't first-line treatments, but they're valuable tools in your therapeutic arsenal."
+    },
+    {
+      "slide": 1,
+      "title": "Treatment Algorithm",
+      "script": "Let's walk through our treatment algorithm for catatonia - this is something you'll want to commit to memory. We start with intravenous lorazepam, beginning with a test dose and then ramping up to 6-8mg daily. If that's not sufficient, our next line is electroconvulsive therapy, and I want to emphasize here that we need at least 6 treatments to properly evaluate efficacy. Moving down our algorithm, we have glutamate antagonists like amantadine or memantine, followed by anti-epileptics such as carbamazepine or valproic acid. Finally, we can consider atypical antipsychotics - particularly aripiprazole, olanzapine, or clozapine. Think of this as a stepwise approach, each level building on the previous intervention."
+    },
+    {
+      "slide": 2,
+      "title": "Neuroleptic Malignant Syndrome",
+      "script": "Now, let's tackle something that every clinician needs to be able to recognize - Neuroleptic Malignant Syndrome, or NMS. Interestingly, while this is a critical condition, it actually doesn't have formal DSM criteria. Instead, we rely on expert panel criteria. The key elements here are exposure to a dopamine antagonist - or withdrawal of a dopamine agonist - within 72 hours, combined with hyperthermia and rigidity. We're also looking for mental status changes, significantly elevated CK levels - specifically more than 4 times the upper limit of normal - and autonomic instability. Add hypermetabolism to that list, and remember, we need to rule out other medical or substance-induced causes. Think of this as a detective's checklist - you need multiple pieces of evidence to make your case."
+    },
+    {
+      "slide": 3,
+      "title": "NMS: Complications and Treatment",
+      "script": "The complications of NMS are serious business, folks. We're looking at potentially life-threatening conditions including rhabdomyolysis, seizures, respiratory failure, and acute kidney injury. Don't forget about the risks of sepsis, acute MI, acute liver failure, and pulmonary embolism. Here's a sobering statistic - the mortality rate is 5.6%. That's why proper treatment is crucial. The first step is absolutely fundamental - remove the offending agent. After that, interestingly enough, the treatment approach parallels what we just discussed for catatonia. This is one of those beautiful symmetries in medicine where understanding one condition helps you treat another."
+    },
+    {
+      "slide": 1,
+      "title": "Serotonin Syndrome",
+      "script": "Let's talk about Serotonin Syndrome, or SS - a fascinating condition that's actually considered a subtype of malignant catatonia. You'll encounter this in your practice, so let's make sure you can spot it. The key symptoms follow a clear pattern: Look for spontaneous clonus, or inducible clonus paired with either agitation or diaphoresis. You might also see ocular clonus with agitation or diaphoresis, tremor with hyperreflexia, or the triad of hypertonia, hyperthermia, and either ocular or inducible clonus. Here's a clinical pearl - while traditionally we associated this with MAOI-serotonergic med combinations, nowadays we're seeing it more with polypharmacy or overdoses. Remember to have SS on your radar for any patient on multiple psychiatric meds - especially more than four - or any patient presenting with catatonic features."
+    },
+    {
+      "slide": 2,
+      "title": "Treatment of Serotonin Syndrome",
+      "script": "Now, how do we treat Serotonin Syndrome? The good news is that in most cases, we don't need anything too complex. The cornerstone of treatment is supportive care and simply washing out the offending medications. Think of it like letting a strong cup of coffee wear off - sometimes the best treatment is time. However, we can help manage symptoms along the way. Benzodiazepines are particularly useful, especially if you're seeing agitation or catatonic symptoms. Short-acting antihypertensives can help with blood pressure control. If these measures aren't cutting it, we have cyproheptadine in our back pocket - it's a 5-HT1A and 5-HT2A antagonist that can be quite effective as a rescue medication."
+    },
+    {
+      "slide": 3,
+      "title": "References",
+      "script": "I know reference slides can be dry, but these citations are your treasure map to deeper understanding! I particularly want to highlight a few key papers here. The Azzam and Gopalan paper from 2013 is excellent for understanding diagnostic challenges in the general hospital setting. Beach's 2017 systematic review on alternative treatment strategies is a must-read if you want to expand your therapeutic toolkit. And don't overlook Clinebell's 2014 guidelines - they're incredibly practical for preventing medical complications. I encourage you to bookmark these references - they'll serve you well throughout your career."
+    },
+    {
+      "slide": 1,
+      "title": "References Page 1",
+      "script": "Now, I'd like to take a moment to highlight some of the key literature that forms the foundation of our understanding of catatonia and related conditions. The Hunter Serotonin Toxicity Criteria, developed by Dunkley and colleagues, gave us reliable diagnostic tools that we still use today. And the work by Fricchione at MGH really helped us understand the complex relationships between catatonia, NMS, and serotonin syndrome. \n\nI find Grover's work particularly fascinating - they've done excellent research comparing catatonia presentations across different psychiatric conditions, especially in schizophrenia versus mood disorders. This has really shaped how we think about differential diagnosis."
+    },
+    {
+      "slide": 2,
+      "title": "References Page 2",
+      "script": "Let me draw your attention to some other groundbreaking work in this field. Mann's 1986 paper on lethal catatonia was really a wake-up call for our field about the potential severity of this condition. And if you're interested in the immunological aspects - and trust me, you should be - Rogers' 2019 review in Lancet Psychiatry is absolutely essential reading.\n\nI'm particularly excited about Walther's work on the neural mechanisms of catatonia - it's really revolutionizing our understanding of the underlying pathophysiology. Their structural analysis is helping us develop more targeted treatments."
+    },
+    {
+      "slide": 3,
+      "title": "References Page 3",
+      "script": "Some final key references I want to highlight - these are absolute gems for your clinical practice. Modi's work on NMS complications and outcomes is crucial for understanding prognosis. And Oldham's paper on distinguishing catatonia from delirium - well, that's something every clinician needs to understand thoroughly.\n\nThe meta-analysis by Solmi is particularly powerful - it gives us the best evidence we have on prevalence rates and moderating factors. Keep these references handy - they'll serve you well when you're facing challenging cases in your practice."
+    }
+  ]
+}
