@@ -2,8 +2,9 @@ from firebase_admin import storage
 from datetime import datetime
 import json
 import os
+import traceback
 
-def process_pdf_to_json(pdf_path: str) -> dict:
+def process_pdf_to_json_script(pdf_path: str) -> dict:
     """
     Convert PDF to JSON format. This is a placeholder for the actual LLM-based implementation.
     Will be implemented with proper LLM APIs later.
@@ -19,14 +20,12 @@ def process_pdf_to_json(pdf_path: str) -> dict:
         ]
     }
 
-def on_pdf_uploaded(event, context):
+def on_pdf_uploaded(event):
     """Background Cloud Function to be triggered by Cloud Storage."""
     try:
-        file = event
-        
         # Get file path from event
-        bucket_name = file['bucket']
-        file_path = file['name']
+        bucket_name = event.bucket
+        file_path = event.name
         
         # Only process PDFs in the uploads directory
         if not file_path.startswith('uploads/') or not file_path.endswith('.pdf'):
@@ -42,7 +41,7 @@ def on_pdf_uploaded(event, context):
         pdf_blob.download_to_filename(temp_pdf_path)
         
         # Process PDF to JSON
-        json_data = process_pdf_to_json(temp_pdf_path)
+        json_data = process_pdf_to_json_script(temp_pdf_path)
         
         # Upload JSON to a new location
         presentation_id = os.path.splitext(os.path.basename(file_path))[0]
@@ -55,8 +54,9 @@ def on_pdf_uploaded(event, context):
         )
         
         # Clean up temporary file
-        os.remove(temp_pdf_path)
-        
+        if os.path.exists(temp_pdf_path):
+            os.remove(temp_pdf_path)
+            
         # Update metadata in original PDF blob
         pdf_blob.metadata = {
             'processed': 'true',
@@ -65,9 +65,19 @@ def on_pdf_uploaded(event, context):
         }
         pdf_blob.patch()
         
-        print(f"Successfully processed {file_path} to {json_path}")
-        return json_path
-        
+        return {
+            'success': True,
+            'message': f'Successfully processed PDF and created presentation {presentation_id}',
+            'presentation_id': presentation_id
+        }
+            
     except Exception as e:
-        print(f"Error processing PDF {file_path}: {str(e)}")
-        raise
+        print(f'Error processing PDF: {str(e)}')
+        print('Traceback:')
+        print(traceback.format_exc())
+        return {
+            'success': False,
+            'message': f'Error processing PDF: {str(e)}',
+            'traceback': traceback.format_exc(),
+            'file_path': file_path if 'file_path' in locals() else 'unknown'
+        }
