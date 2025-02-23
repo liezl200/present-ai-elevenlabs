@@ -1,24 +1,391 @@
 from firebase_admin import storage
+from typing import List, Optional
+import asyncio
 from datetime import datetime
 import json
 import os
 import traceback
+import PyPDF2
+from anthropic import AsyncAnthropic
+import argparse
 
-def process_pdf_to_json_script(pdf_path: str) -> dict:
+async def generate_narrative_batch(
+    pdf_text: list[str],  # List of text content from 3 slides
+    start_slide_num: int,
+    claude_client,  # Anthropic API client
+    storage_client,
+    presentation_id: str
+) -> bool:
     """
-    Convert PDF to JSON format. This is a placeholder for the actual LLM-based implementation.
-    Will be implemented with proper LLM APIs later.
+    Generates narrative content for a batch of 3 slides and saves to storage.
+    Returns True if successful, False if needs retry.
     """
-    # TODO: Implement actual PDF to JSON conversion using LLM APIs
-    return {
-        "title": "Placeholder",
+    SYSTEM_PROMPT = """
+    You are a distinguished professor teaching medicine to residents at Harvard. You are known for your friendly tone and uncanny ability to make complex concepts entertaining and memorable while teaching. You have wonderful reviews from all of your students for your precise yet engaging teaching style.
+
+    Your task is to generate a presentation script from lecture slides. Process exactly 3 slides at a time, following this exact format for each slide:
+
+    Slide <slide_number> (<slide_title>): "<slide_script>"
+
+    Example format:
+    Slide 1 (Title Slide): "Welcome everyone! Today we're going to dive into a fascinating and important topic - catatonia. As a clinician, you'll find this information invaluable in your practice. Let me guide you through understanding this complex condition."
+
+    Important formatting rules:
+    1. Always maintain the exact structure: "Slide X (Title): "Script""
+    2. Use straight quotes (") not curly quotes
+    3. Keep paragraph breaks within the script using \n
+    4. Never break the slide format with additional text between slides
+    5. Never ask if you should continue - just process exactly 3 slides and stop
+    6. Maintain your engaging professorial tone while following these strict formatting requirements
+
+    Remember to bring your friendly, engaging teaching style to each slide while maintaining this exact formatting structure.
+    """
+
+    try:
+        # Prepare metadata
+        batch_id = f"batch_{start_slide_num}_slides_{start_slide_num}-{start_slide_num+2}"
+        metadata = {
+            "batch_metadata": {
+                "batch_id": batch_id,
+                "slide_range": {
+                    "start": start_slide_num,
+                    "end": start_slide_num + 2
+                },
+                "status": {
+                    "narrative": {
+                        "state": "in_progress",
+                        "attempts": 0,
+                        "last_updated": datetime.utcnow().isoformat()
+                    },
+                    "json": {
+                        "state": "pending",
+                        "validation": "pending",
+                        "attempts": 0,
+                        "last_updated": None
+                    }
+                }
+            }
+        }
+
+        # Call Claude with system prompt and slide content
+        narrative_response = await claude_client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=4096,
+            messages=[{
+                "role": "user",
+                "content": f"Generate scripts for these 3 slides:\n\n{pdf_text}"
+            }],
+            system=SYSTEM_PROMPT
+        )
+
+        # Save narrative to storage
+        storage_path = f"presentations/{presentation_id}/intermediate_outputs/narrative/{batch_id}.txt"
+        target_blob = storage_client.blob(storage_path)
+        target_blob.upload_from_string(narrative_response.content[0].text)
+
+        # Update metadata
+        metadata["batch_metadata"]["status"]["narrative"].update({
+            "state": "completed",
+            "last_updated": datetime.utcnow().isoformat()
+        })
+        metadata_path = f"{storage_path}.metadata.json"
+        metadata_blob = storage_client.blob(metadata_path)
+        metadata_blob.upload_from_string(json.dumps(metadata))
+
+        return True
+
+    except Exception as e:
+        print(traceback.format_exc())
+        # Update metadata with failure
+        metadata["batch_metadata"]["status"]["narrative"].update({
+            "state": "failed",
+            "attempts": metadata["batch_metadata"]["status"]["narrative"]["attempts"] + 1,
+            "last_updated": datetime.utcnow().isoformat(),
+            "error": str(e)
+        })
+        metadata_path = f"{storage_path}.metadata.json"
+        metadata_blob = storage_client.blob(metadata_path)
+        metadata_blob.upload_from_string(json.dumps(metadata))
+        return False
+
+async def convert_to_json_batch(
+    narrative_text: str,
+    batch_id: str,
+    claude_client,
+    storage_client,
+    presentation_id: str
+) -> bool:
+    """
+    Converts narrative batch to JSON format and validates the output.
+    Returns True if successful, False if needs retry.
+    """
+    JSON_CONVERSION_PROMPT = """
+    Your task is to convert the following slide scripts into a strictly formatted JSON array. You must follow these validation rules exactly.
+
+    Required format:
+    {
         "slides": [
             {
-                "id": "slide1",
-                "content": "Placeholder content"
-            }
+                "slide": <number>,
+                "title": "<exact title from slides>",
+                "script": "<complete script text>"
+            },
+            ...
         ]
     }
+
+    Validation rules:
+    1. Slide numbers must be sequential integers starting from the first slide in the batch
+    2. Titles must be preserved exactly as given, without adding or removing punctuation
+    3. Scripts must:
+       - Preserve all line breaks as \n
+       - Maintain all original punctuation
+       - Keep all formatting like bullet points and lists
+       - Not contain unescaped quotes
+    4. No empty or null values are allowed in any field
+    5. No additional fields beyond slide, title, and script
+    6. Arrays must be properly terminated
+    7. The outer object must contain only the "slides" key
+
+    Return only valid JSON with no additional text or commentary.
+    """
+
+    try:
+        # Read existing metadata
+        metadata_path = f"presentations/{presentation_id}/intermediate_outputs/narrative/{batch_id}.txt.metadata.json"
+        metadata = json.loads(await storage_client.download_blob(metadata_path))
+        
+        metadata["batch_metadata"]["status"]["json"].update({
+            "state": "in_progress",
+            "last_updated": datetime.utcnow().isoformat()
+        })
+
+        # Call Claude for JSON conversion
+        json_response = await claude_client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=4096,
+            messages=[{
+                "role": "user",
+                "content": f"Convert this to JSON:\n\n{narrative_text}"
+            }],
+            system=JSON_CONVERSION_PROMPT
+        )
+
+        # Validate JSON structure
+        try:
+            json_data = json.loads(json_response.content[0].text)
+            
+            # Basic validation
+            assert "slides" in json_data, "Missing 'slides' key"
+            assert isinstance(json_data["slides"], list), "'slides' must be an array"
+            
+            for slide in json_data["slides"]:
+                assert all(k in slide for k in ["slide", "title", "script"]), "Missing required fields"
+                assert isinstance(slide["slide"], int), "Slide number must be integer"
+                assert isinstance(slide["title"], str) and slide["title"], "Invalid title"
+                assert isinstance(slide["script"], str) and slide["script"], "Invalid script"
+
+            # Save validated JSON
+            json_path = f"presentations/{presentation_id}/intermediate_outputs/json/{batch_id}.json"
+            json_blob = storage_client.blob(json_path)
+            json_blob.upload_from_string(json.dumps(json_data, ensure_ascii=False, indent=2))
+
+            # Update metadata
+            metadata["batch_metadata"]["status"]["json"].update({
+                "state": "completed",
+                "validation": "passed",
+                "last_updated": datetime.utcnow().isoformat()
+            })
+            metadata_blob = storage_client.blob(metadata_path)
+            metadata_blob.upload_from_string(json.dumps(metadata))
+
+            return True
+
+        except (json.JSONDecodeError, AssertionError) as e:
+            raise ValueError(f"JSON validation failed: {str(e)}")
+
+    except Exception as e:
+        # Update metadata with failure
+        metadata["batch_metadata"]["status"]["json"].update({
+            "state": "failed",
+            "validation": "failed",
+            "attempts": metadata["batch_metadata"]["status"]["json"]["attempts"] + 1,
+            "last_updated": datetime.utcnow().isoformat(),
+            "error": str(e)
+        })
+        metadata_blob = storage_client.blob(metadata_path)
+        metadata_blob.upload_from_string(json.dumps(metadata))
+        return False
+
+async def process_presentation(
+    presentation_id: str,
+    pdf_slides: List[str],  # List of text content from all slides
+    claude_client,
+    storage_client
+) -> Optional[str]:
+    """
+    Main orchestration function for processing slides and generating the final script.
+    Returns the path to the final script.json if successful, None if failed.
+    """
+    
+    async def process_batch(start_idx: int, batch_slides: List[str]) -> bool:
+        batch_id = f"batch_{start_idx+1}_slides_{start_idx+1}-{start_idx+3}"
+        
+        # Step 1: Generate narrative with retries
+        narrative_success = False
+        for attempt in range(2):  # Try narrative generation twice
+            narrative_success = await generate_narrative_batch(
+                pdf_text=batch_slides,
+                start_slide_num=start_idx + 1,
+                claude_client=claude_client,
+                storage_client=storage_client,
+                presentation_id=presentation_id
+            )
+            if narrative_success:
+                break
+        
+        if not narrative_success:
+            print(f"Failed to generate narrative for batch {batch_id} after 2 attempts")
+            return False
+
+        # Get narrative text for JSON conversion
+        narrative_path = f"presentations/{presentation_id}/intermediate_outputs/narrative/{batch_id}.txt"
+        narrative_text = await storage_client.download_blob(narrative_path)
+
+        # Step 2: Convert to JSON with retries
+        json_success = False
+        for attempt in range(2):  # Try JSON conversion twice
+            json_success = await convert_to_json_batch(
+                narrative_text=narrative_text,
+                batch_id=batch_id,
+                claude_client=claude_client,
+                storage_client=storage_client,
+                presentation_id=presentation_id
+            )
+            if json_success:
+                break
+
+        if not json_success:
+            # Try regenerating both narrative and JSON
+            for attempt in range(2):
+                narrative_success = await generate_narrative_batch(
+                    pdf_text=batch_slides,
+                    start_slide_num=start_idx + 1,
+                    claude_client=claude_client,
+                    storage_client=storage_client,
+                    presentation_id=presentation_id
+                )
+                if narrative_success:
+                    narrative_text = await storage_client.download_blob(narrative_path)
+                    json_success = await convert_to_json_batch(
+                        narrative_text=narrative_text,
+                        batch_id=batch_id,
+                        claude_client=claude_client,
+                        storage_client=storage_client,
+                        presentation_id=presentation_id
+                    )
+                    if json_success:
+                        break
+
+        if not json_success:
+            print(f"Failed to process batch {batch_id} after all retry attempts")
+            return False
+
+        return True
+
+    # Create directory structure
+    base_path = f"presentations/{presentation_id}"
+    intermediate_path = f"{base_path}/intermediate_outputs"
+    narrative_path = f"{intermediate_path}/narrative"
+    json_path = f"{intermediate_path}/json"
+    
+    # Process batches of 3 slides with some parallelization
+    batch_results = []
+    for i in range(0, len(pdf_slides), 3):
+        batch_slides = pdf_slides[i:i+3]
+        # Allow up to 2 batches to process concurrently
+        if len(batch_results) >= 2:
+            # Wait for the earliest batch to complete before starting new one
+            await batch_results.pop(0)
+        
+        batch_results.append(asyncio.create_task(process_batch(i, batch_slides)))
+
+    # Wait for remaining batches
+    remaining_results = await asyncio.gather(*batch_results)
+    if not all(remaining_results):
+        return None
+
+    # Combine all JSON batches into final script
+    final_slides = []
+    for i in range(0, len(pdf_slides), 3):
+        batch_id = f"batch_{i+1}_slides_{i+1}-{i+3}"
+        json_batch_path = f"{json_path}/{batch_id}.json"
+        batch_json = json.loads(await storage_client.download_blob(json_batch_path))
+        final_slides.extend(batch_json["slides"])
+
+    final_script = {
+        "slides": final_slides
+    }
+
+    # Save final script
+    final_path = f"{base_path}/script.json"
+    final_blob = storage_client.blob(final_path)
+    final_blob.upload_from_string(json.dumps(final_script, ensure_ascii=False, indent=2))
+
+    return final_path
+
+async def process_local_pdf(pdf_path: str) -> Optional[str]:
+    """
+    Process a local PDF file without using Cloud Storage.
+    Returns the path to the generated script.json file if successful.
+    """
+    try:
+        # Extract presentation ID from filename
+        presentation_id = os.path.splitext(os.path.basename(pdf_path))[0]
+        pdf_slides = []
+        
+        # Extract text from PDF
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            
+            # Extract text from each page/slide
+            for page in pdf_reader.pages:
+                slide_text = page.extract_text()
+                if slide_text.strip():  # Only add non-empty slides
+                    pdf_slides.append(slide_text)
+        
+        # Initialize Claude client
+        claude_client = AsyncAnthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+        bucket_name = "gs://presentable-b5545.firebasestorage.app"
+        # Create a simple storage client for local files
+        bucket = storage.bucket(bucket_name)
+        
+        # Copy PDF to presentations folder
+        # presentation_path = f"presentations/{presentation_id}/input.pdf"
+        # await bucket.copy_blob(
+        #     source_blob=f"uploads/{presentation_id}.pdf",
+        #     destination_blob=presentation_path
+        # )
+        
+        # Process the presentation
+        final_path = await process_presentation(
+            presentation_id=presentation_id,
+            pdf_slides=pdf_slides,
+            claude_client=claude_client,
+            storage_client=bucket
+        )
+        
+        if final_path:
+            print(f"Successfully processed PDF. Output saved to: gs://presentable-b5545.firebasestorage.app/{final_path}")
+        else:
+            print("Failed to process PDF")
+        
+        return final_path
+    
+    except Exception as e:
+        print(f"Error processing local PDF: {str(e)}")
+        traceback.print_exc()
+        return None
 
 def on_pdf_uploaded(event):
     """Background Cloud Function to be triggered by Cloud Storage."""
@@ -31,36 +398,60 @@ def on_pdf_uploaded(event):
         if not file_path.startswith('uploads/') or not file_path.endswith('.pdf'):
             print(f"Skipping file {file_path} - not a PDF in uploads directory")
             return
-            
-        # Get bucket and create client
-        bucket = storage.bucket(bucket_name)
         
-        # Download PDF to temporary storage
+        # Get bucket and blob
+        bucket = storage.bucket(bucket_name)
         pdf_blob = bucket.blob(file_path)
+        
+        # Download PDF to temp file
         temp_pdf_path = f"/tmp/{os.path.basename(file_path)}"
         pdf_blob.download_to_filename(temp_pdf_path)
         
         # Process PDF to JSON
-        json_data = process_pdf_to_json_script(temp_pdf_path)
+        presentation_id = os.path.splitext(os.path.basename(file_path))[0]
+        pdf_slides = []  # List of text content from all slides
+        
+        # Extract text from PDF
+        with open(temp_pdf_path, 'rb') as pdf_file:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            
+            # Extract text from each page/slide
+            for page in pdf_reader.pages:
+                slide_text = page.extract_text()
+                if slide_text.strip():  # Only add non-empty slides
+                    pdf_slides.append(slide_text)
+        
+        # Initialize clients
+        claude_client = AsyncAnthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+        storage_client = bucket  # Use the bucket as storage client
+        
+        # Call process_presentation function
+        final_path = asyncio.run(process_presentation(
+            presentation_id=presentation_id,
+            pdf_slides=pdf_slides,
+            claude_client=claude_client,
+            storage_client=storage_client
+        ))
+        
+        if final_path is None:
+            print(f"Failed to process presentation {presentation_id}")
+            return
         
         # Upload JSON to a new location
-        presentation_id = os.path.splitext(os.path.basename(file_path))[0]
-        json_path = f"presentations/{presentation_id}/content.json"
-        json_blob = bucket.blob(json_path)
+        json_blob = bucket.blob(final_path)
         
         json_blob.upload_from_string(
-            json.dumps(json_data),
+            json.dumps({"slides": []}),  # Replace with actual JSON data
             content_type='application/json'
         )
         
-        # Clean up temporary file
-        if os.path.exists(temp_pdf_path):
-            os.remove(temp_pdf_path)
-            
+        # Clean up temp file
+        os.remove(temp_pdf_path)
+        
         # Update metadata in original PDF blob
         pdf_blob.metadata = {
             'processed': 'true',
-            'json_path': json_path,
+            'json_path': final_path,
             'processed_at': datetime.now().isoformat()
         }
         pdf_blob.patch()
@@ -70,14 +461,32 @@ def on_pdf_uploaded(event):
             'message': f'Successfully processed PDF and created presentation {presentation_id}',
             'presentation_id': presentation_id
         }
-            
+        
     except Exception as e:
         print(f'Error processing PDF: {str(e)}')
-        print('Traceback:')
-        print(traceback.format_exc())
-        return {
-            'success': False,
-            'message': f'Error processing PDF: {str(e)}',
-            'traceback': traceback.format_exc(),
-            'file_path': file_path if 'file_path' in locals() else 'unknown'
-        }
+        traceback.print_exc()
+        raise
+
+def main():
+    
+    from dotenv import load_dotenv
+    from firebase_admin import initialize_app, storage
+    
+    # Initialize Firebase app
+    app = initialize_app()
+
+    load_dotenv()
+    PDF_PATH = '../notebooks/test.pdf'
+    
+    if not os.path.exists(PDF_PATH):
+        print(f"Error: File not found: {PDF_PATH}")
+        return
+    
+    if not os.environ.get('ANTHROPIC_API_KEY'):
+        print("Error: ANTHROPIC_API_KEY environment variable not set")
+        return
+    
+    asyncio.run(process_local_pdf(PDF_PATH))
+
+if __name__ == '__main__':
+    main()
