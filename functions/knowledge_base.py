@@ -155,7 +155,7 @@ def handle_knowledge_base_upload_from_bucket_trigger(event):
 def handle_knowledge_base_upload(script_file_path: str, storage_client):
     """Cloud Function entry point for knowledge base upload"""
     try:
-        agent_name = request_json.get('agent_name')
+        presentation_id = os.path.splitext(os.path.basename(pdf_path))[0]
         
         # Get the script data from Cloud Storage
         blob = storage_client.blob(script_file_path)
@@ -169,7 +169,7 @@ def handle_knowledge_base_upload(script_file_path: str, storage_client):
         if kb_response and 'id' in kb_response:
             agent_response = uploader.create_agent_from_knowledge_base(
                 kb_response['id'],
-                name=agent_name
+                name=presentation_id
             )
             
             # Store a reference to the original JSON in Cloud Storage
