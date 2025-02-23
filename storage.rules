@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/presentable-b5545.firebasestorage.app/o {
+    match /uploads/{fileName} {
+      allow read, write: if true;
+    }
+    match /presentations/{presentationId}/{fileName} {
+      allow read, write: if true;
+    }
+  }
+}
