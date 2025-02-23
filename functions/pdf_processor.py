@@ -1,5 +1,5 @@
 from firebase_admin import storage
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import asyncio
 from datetime import datetime
 import json
@@ -8,6 +8,12 @@ import traceback
 import PyPDF2
 from anthropic import AsyncAnthropic
 import argparse
+import aiohttp
+from pydub import AudioSegment
+import io
+from dotenv import load_dotenv
+
+load_dotenv()
 
 async def generate_narrative_batch(
     pdf_text: list[str],  # List of text content from 3 slides
@@ -123,7 +129,7 @@ async def convert_to_json_batch(
     # Extract start slide number from batch_id
     start_slide_num = int(batch_id.split("_")[1])
     
-    JSON_CONVERSION_PROMPT = f"""
+    JSON_CONVERSION_PROMPT = """
     Your task is to convert the following slide scripts into a strictly formatted JSON array. You must follow these validation rules exactly.
 
     Required format:
@@ -139,17 +145,16 @@ async def convert_to_json_batch(
     }
 
     Validation rules:
-    1. Slide numbers MUST start from {start_slide_num} and increment sequentially
-    2. Titles must be preserved exactly as given, without adding or removing punctuation
-    3. Scripts must:
+    1. Titles must be preserved exactly as given, without adding or removing punctuation
+    2. Scripts must:
        - Preserve all line breaks as \\n
        - Maintain all original punctuation
        - Keep all formatting like bullet points and lists
        - Not contain unescaped quotes
-    4. No empty or null values are allowed in any field
-    5. No additional fields beyond slide, title, and script
-    6. Arrays must be properly terminated
-    7. The outer object must contain only the "slides" key
+    3. No empty or null values are allowed in any field
+    4. No additional fields beyond slide, title, and script
+    5. Arrays must be properly terminated
+    6. The outer object must contain only the "slides" key
 
     Return only valid JSON with no additional text or commentary.
     """
@@ -324,8 +329,8 @@ async def process_presentation(
     batch_results = []
     for i in range(0, len(pdf_slides), 3):
         batch_slides = pdf_slides[i:i+3]
-        # Allow up to 2 batches to process concurrently
-        if len(batch_results) >= 2:
+        # Allow up to 5 batches to process concurrently
+        if len(batch_results) >= 5:
             # Wait for the earliest batch to complete before starting new one
             await batch_results.pop(0)
         
@@ -390,10 +395,15 @@ async def process_local_pdf(pdf_path: str) -> Optional[str]:
         # )
         
         # Process the presentation
-        final_path = await process_presentation(
+        # final_path = await process_presentation(
+        #     presentation_id=presentation_id,
+        #     pdf_slides=pdf_slides,
+        #     claude_client=claude_client,
+        #     storage_client=bucket
+        # )
+
+        audio_path = await process_audio(
             presentation_id=presentation_id,
-            pdf_slides=pdf_slides,
-            claude_client=claude_client,
             storage_client=bucket
         )
         
@@ -407,6 +417,133 @@ async def process_local_pdf(pdf_path: str) -> Optional[str]:
     except Exception as e:
         print(f"Error processing local PDF: {str(e)}")
         traceback.print_exc()
+        return None
+
+async def process_audio(presentation_id: str, storage_client) -> Optional[str]:
+    """
+    Process audio for all slides in parallel using ElevenLabs API.
+    Loads the script.json from Cloud Storage and generates audio files.
+    Returns the path to the directory containing generated audio files.
+    """
+    try:
+        # Load environment variables
+        xi_api_key = os.getenv("YOUR_XI_API_KEY")
+        if not xi_api_key:
+            raise ValueError("ElevenLabs API key not found in environment variables")
+
+        # Load the script data from Cloud Storage
+        base_path = f"presentations/{presentation_id}"
+        script_path = f"{base_path}/script.json"
+        script_blob = storage_client.blob(script_path)
+        
+        if not script_blob.exists():
+            raise ValueError(f"Script not found at {script_path}")
+            
+        script_content = script_blob.download_as_text()
+        script_data = json.loads(script_content)
+
+        # Extract scripts from slides, excluding any with should_skip=true
+        paragraphs = [
+            slide['script'] 
+            for slide in script_data['slides'] 
+            if not slide.get('should_skip', False)
+        ]
+
+        voice_id = "JBFqnCBsd6RMkjVDRZzb"  # Default voice ID
+        audio_base_path = f"{base_path}/audio"
+
+        async def process_paragraph(
+            session: aiohttp.ClientSession, 
+            paragraph: str, 
+            index: int, 
+            total: int
+        ) -> Tuple[int, bytes]:
+            """Process a single paragraph and return its index and audio content."""
+            is_last_paragraph = index == total - 1
+            is_first_paragraph = index == 0
+            
+            async with session.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream",
+                json={
+                    "text": paragraph,
+                    "model_id": "eleven_multilingual_v2",
+                    "previous_text": None if is_first_paragraph else " ".join(paragraphs[:index]),
+                    "next_text": None if is_last_paragraph else " ".join(paragraphs[index + 1:])
+                },
+                headers={"xi-api-key": xi_api_key}
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    print(f"Error encountered, status: {response.status}, content: {error_text}")
+                    raise Exception(f"Failed to process paragraph {index + 1}")
+                    
+                print(f"Successfully converted paragraph {index + 1}/{total}")
+                content = await response.read()
+                return index, content
+
+        async def main_audio_processing():
+            async with aiohttp.ClientSession() as session:
+                # Create tasks for all paragraphs
+                tasks = [
+                    process_paragraph(session, paragraph, i, len(paragraphs))
+                    for i, paragraph in enumerate(paragraphs)
+                ]
+                
+                # Process up to 5 paragraphs concurrently
+                segment_results = []
+                for batch in range(0, len(tasks), 5):
+                    batch_tasks = tasks[batch:batch + 5]
+                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                    segment_results.extend(batch_results)
+                
+                # Check for any errors
+                for result in segment_results:
+                    if isinstance(result, Exception):
+                        print(f"Error processing paragraph: {result}")
+                        return None
+
+                # Sort segments by index and process audio
+                sorted_results = sorted(segment_results, key=lambda x: x[0])
+                
+                # Convert to audio segments and combine
+                segments = []
+                for i, content in sorted_results:
+                    segment = AudioSegment.from_mp3(io.BytesIO(content))
+                    segments.append(segment)
+                    
+                    # Save individual segment to storage
+                    segment_path = f"{audio_base_path}/segment_{i}.wav"
+                    segment_blob = storage_client.blob(segment_path)
+                    
+                    # Export to bytes
+                    audio_data = io.BytesIO()
+                    segment.export(audio_data, format="wav")
+                    audio_data.seek(0)
+                    segment_blob.upload_from_file(audio_data, content_type="audio/wav")
+                
+                # Combine all segments
+                final_segment = segments[0]
+                for segment in segments[1:]:
+                    final_segment = final_segment + segment
+                
+                # Save combined audio to storage
+                final_path = f"{audio_base_path}/combined_audio.wav"
+                final_blob = storage_client.blob(final_path)
+                
+                # Export to bytes
+                final_audio_data = io.BytesIO()
+                final_segment.export(final_audio_data, format="wav")
+                final_audio_data.seek(0)
+                final_blob.upload_from_file(final_audio_data, content_type="audio/wav")
+                
+                print(f"Successfully generated audio files in {audio_base_path}")
+                return audio_base_path
+
+        return await main_audio_processing()
+
+    except Exception as e:
+        print(f"Error in process_audio: {str(e)}")
+        print(traceback.format_exc())
         return None
 
 def on_pdf_uploaded(event):
@@ -454,18 +591,27 @@ def on_pdf_uploaded(event):
             claude_client=claude_client,
             storage_client=storage_client
         ))
-        
+
         if final_path is None:
-            print(f"Failed to process presentation {presentation_id}")
+            print(f"Failed to process presentation json {presentation_id}")
+            return
+        # call proccess audio function
+        audio_path = asyncio.run(process_audio(
+            presentation_id=presentation_id,
+            storage_client=storage_client
+        ))
+        
+        if audio_path is None:
+            print(f"Failed to process presentation audio {presentation_id}")
             return
         
-        # Upload JSON to a new location
-        json_blob = bucket.blob(final_path)
+        # # Upload JSON to a new location
+        # json_blob = bucket.blob(final_path)
         
-        json_blob.upload_from_string(
-            json.dumps({"slides": []}),  # Replace with actual JSON data
-            content_type='application/json'
-        )
+        # json_blob.upload_from_string(
+        #     json.dumps({"slides": []}),  # Replace with actual JSON data
+        #     content_type='application/json'
+        # )
         
         # Clean up temp file
         os.remove(temp_pdf_path)
@@ -474,6 +620,7 @@ def on_pdf_uploaded(event):
         pdf_blob.metadata = {
             'processed': 'true',
             'json_path': final_path,
+            'audio_path': audio_path,
             'processed_at': datetime.now().isoformat()
         }
         pdf_blob.patch()
