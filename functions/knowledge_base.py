@@ -135,15 +135,30 @@ class KnowledgeBaseUploader:
                 print(f"Response: {e.response.text}")
             raise
 
-def handle_knowledge_base_upload(request):
+def handle_knowledge_base_upload_from_request(request):
+    """Cloud Function entry point for knowledge base upload"""
+
+    request_json = request.get_json()
+    script_file_path = request_json['script_file_path']  # Path in Cloud Storage
+    handle_knowledge_base_upload(script_file_path, storage_client=storage.bucket("presentable-b5545.firebasestorage.app"))
+
+def handle_knowledge_base_upload_from_bucket_trigger(event):
+    """Cloud Function entry point for knowledge base upload"""
+    # Get file path from event
+    bucket_name = event.bucket
+    file_path = event.name
+    bucket = storage.bucket(bucket_name)
+
+    handle_knowledge_base_upload(file_path, storage_client=bucket)
+
+
+def handle_knowledge_base_upload(script_file_path: str, storage_client):
     """Cloud Function entry point for knowledge base upload"""
     try:
-        request_json = request.get_json()
-        script_file_path = request_json['script_file_path']  # Path in Cloud Storage
         agent_name = request_json.get('agent_name')
         
         # Get the script data from Cloud Storage
-        blob = storage.bucket().blob(script_file_path)
+        blob = storage_client.blob(script_file_path)
         json_data = json.loads(blob.download_as_string())
         
         # Upload to ElevenLabs
