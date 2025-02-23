@@ -81,8 +81,9 @@ async def generate_narrative_batch(
         # Save narrative to storage
         storage_path = f"presentations/{presentation_id}/intermediate_outputs/narrative/{batch_id}.txt"
         target_blob = storage_client.blob(storage_path)
+        print(narrative_response.content[0].text)
         target_blob.upload_from_string(narrative_response.content[0].text)
-
+        print(f"uploaded to {storage_path}")
         # Update metadata
         metadata["batch_metadata"]["status"]["narrative"].update({
             "state": "completed",
@@ -119,7 +120,10 @@ async def convert_to_json_batch(
     Converts narrative batch to JSON format and validates the output.
     Returns True if successful, False if needs retry.
     """
-    JSON_CONVERSION_PROMPT = """
+    # Extract start slide number from batch_id
+    start_slide_num = int(batch_id.split("_")[1])
+    
+    JSON_CONVERSION_PROMPT = f"""
     Your task is to convert the following slide scripts into a strictly formatted JSON array. You must follow these validation rules exactly.
 
     Required format:
@@ -135,10 +139,10 @@ async def convert_to_json_batch(
     }
 
     Validation rules:
-    1. Slide numbers must be sequential integers starting from the first slide in the batch
+    1. Slide numbers MUST start from {start_slide_num} and increment sequentially
     2. Titles must be preserved exactly as given, without adding or removing punctuation
     3. Scripts must:
-       - Preserve all line breaks as \n
+       - Preserve all line breaks as \\n
        - Maintain all original punctuation
        - Keep all formatting like bullet points and lists
        - Not contain unescaped quotes
@@ -149,16 +153,32 @@ async def convert_to_json_batch(
 
     Return only valid JSON with no additional text or commentary.
     """
-
     try:
-        # Read existing metadata
-        metadata_path = f"presentations/{presentation_id}/intermediate_outputs/narrative/{batch_id}.txt.metadata.json"
-        metadata = json.loads(await storage_client.download_blob(metadata_path))
+        # Initialize metadata
+        metadata = {
+            "batch_metadata": {
+                "batch_id": batch_id,
+                "status": {
+                    "json": {
+                        "state": "in_progress",
+                        "validation": "pending",
+                        "attempts": 0,
+                        "last_updated": datetime.utcnow().isoformat()
+                    }
+                }
+            }
+        }
         
-        metadata["batch_metadata"]["status"]["json"].update({
-            "state": "in_progress",
-            "last_updated": datetime.utcnow().isoformat()
-        })
+        metadata_path = f"presentations/{presentation_id}/intermediate_outputs/narrative/{batch_id}.txt.metadata.json"
+        
+        # Try to load existing metadata if it exists
+        try:
+            metadata_blob = storage_client.blob(metadata_path)
+            existing_metadata = json.loads(metadata_blob.download_as_string().decode('utf-8'))
+            metadata["batch_metadata"]["status"]["json"]["attempts"] = existing_metadata["batch_metadata"]["status"]["json"]["attempts"]
+        except Exception:
+            # If metadata doesn't exist or can't be loaded, use the default initialized above
+            pass
 
         # Call Claude for JSON conversion
         json_response = await claude_client.messages.create(
@@ -250,7 +270,8 @@ async def process_presentation(
 
         # Get narrative text for JSON conversion
         narrative_path = f"presentations/{presentation_id}/intermediate_outputs/narrative/{batch_id}.txt"
-        narrative_text = await storage_client.download_blob(narrative_path)
+        blob = storage_client.blob(narrative_path)
+        narrative_text = blob.download_as_string().decode('utf-8')
 
         # Step 2: Convert to JSON with retries
         json_success = False
@@ -276,7 +297,7 @@ async def process_presentation(
                     presentation_id=presentation_id
                 )
                 if narrative_success:
-                    narrative_text = await storage_client.download_blob(narrative_path)
+                    narrative_text = blob.download_as_string().decode('utf-8')
                     json_success = await convert_to_json_batch(
                         narrative_text=narrative_text,
                         batch_id=batch_id,
@@ -319,8 +340,9 @@ async def process_presentation(
     final_slides = []
     for i in range(0, len(pdf_slides), 3):
         batch_id = f"batch_{i+1}_slides_{i+1}-{i+3}"
-        json_batch_path = f"{json_path}/{batch_id}.json"
-        batch_json = json.loads(await storage_client.download_blob(json_batch_path))
+        json_batch_path = f"presentations/{presentation_id}/intermediate_outputs/json/{batch_id}.json"
+        blob = storage_client.blob(json_batch_path)
+        batch_json = json.loads(blob.download_as_bytes())
         final_slides.extend(batch_json["slides"])
 
     final_script = {
@@ -356,7 +378,7 @@ async def process_local_pdf(pdf_path: str) -> Optional[str]:
         
         # Initialize Claude client
         claude_client = AsyncAnthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
-        bucket_name = "gs://presentable-b5545.firebasestorage.app"
+        bucket_name = "presentable-b5545.firebasestorage.app"
         # Create a simple storage client for local files
         bucket = storage.bucket(bucket_name)
         
